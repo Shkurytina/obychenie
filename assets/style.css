@@ -1,0 +1,329 @@
+/* ============================================================
+   RESCUE OPS — shared theme
+   A "night-shift dispatch console" aesthetic:
+   deep navy control-room background, safety-orange accent,
+   radar-green secondary, hazard-yellow highlights.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --navy-950: #071427;
+  --navy-900: #0b2545;
+  --navy-800: #123363;
+  --navy-700: #1b4079;
+  --orange:   #ff6b35;
+  --orange-dim: #cc4f22;
+  --green:    #2ec4b6;
+  --yellow:   #ffc914;
+  --red:      #e63946;
+  --off-white:#f7f3e9;
+  --paper:    #eee7d6;
+  --ink:      #0b2545;
+
+  --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  --radius: 6px;
+  --shadow-hard: 4px 4px 0 rgba(7, 20, 39, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(46, 196, 182, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(255, 107, 53, 0.10), transparent 55%),
+    var(--navy-950);
+  color: var(--off-white);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+/* Faint hazard-tape texture used behind headers */
+.hazard-strip {
+  height: 8px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--yellow),
+    var(--yellow) 14px,
+    var(--navy-950) 14px,
+    var(--navy-950) 28px
+  );
+}
+
+/* ---------- Dispatch console header ---------- */
+.console {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  background: linear-gradient(180deg, var(--navy-900), var(--navy-950));
+  border-bottom: 1px solid var(--navy-700);
+}
+
+.console__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  font-size: 1.1rem;
+  text-decoration: none;
+  color: var(--off-white);
+}
+
+.console__brand small {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--green);
+  text-transform: uppercase;
+}
+
+.status-light {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px 2px var(--green);
+  animation: pulse 1.8s ease-in-out infinite;
+  flex: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.console__meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--paper);
+  opacity: 0.75;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Layout ---------- */
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin: 0 0 0.6rem;
+}
+
+h1.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.05;
+  margin: 0 0 0.6rem;
+  color: var(--off-white);
+}
+
+.lede {
+  max-width: 60ch;
+  color: var(--paper);
+  opacity: 0.85;
+  margin: 0 0 2.2rem;
+}
+
+/* ---------- Mission cards (hub) ---------- */
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.mission {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.5rem;
+  background: var(--navy-900);
+  border: 1px solid var(--navy-700);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-hard);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.mission:hover,
+.mission:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(255, 107, 53, 0.35);
+  border-color: var(--orange);
+  outline: none;
+}
+
+.mission__tag {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(46, 196, 182, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(46, 196, 182, 0.4);
+}
+
+.mission__icon { font-size: 2rem; line-height: 1; }
+
+.mission h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  margin: 0;
+  color: var(--off-white);
+}
+
+.mission p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--paper);
+  opacity: 0.8;
+}
+
+.mission__go {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  background: var(--orange);
+  color: var(--navy-950);
+  box-shadow: var(--shadow-hard);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  text-decoration: none;
+}
+
+.btn:hover, .btn:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(255, 107, 53, 0.35);
+  outline: none;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--off-white);
+  border: 1px solid var(--navy-700);
+  box-shadow: none;
+}
+
+.btn--ghost:hover, .btn--ghost:focus-visible {
+  border-color: var(--orange);
+  box-shadow: none;
+  transform: none;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ---------- Game shell ---------- */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--green);
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+}
+.back-link:hover { color: var(--yellow); }
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.hud__stat {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-700);
+  border-radius: var(--radius);
+  padding: 0.55rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--paper);
+}
+.hud__stat b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--yellow);
+  letter-spacing: normal;
+}
+
+.panel {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-700);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-hard);
+}
+
+.footer-note {
+  margin-top: 3rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--paper);
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-light { animation: none; }
+  .mission, .btn { transition: none; }
+}

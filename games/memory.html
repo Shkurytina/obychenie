@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Инвентаризация снаряжения — RESCUE OPS</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.7rem;
+  }
+  @media (max-width: 520px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .card {
+    aspect-ratio: 1 / 1;
+    perspective: 700px;
+    cursor: pointer;
+  }
+  .card__inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.35s ease;
+    transform-style: preserve-3d;
+  }
+  .card.flipped .card__inner,
+  .card.matched .card__inner {
+    transform: rotateY(180deg);
+  }
+  .card__face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    backface-visibility: hidden;
+    font-size: 2.1rem;
+  }
+  .card__face--back {
+    background: var(--navy-900);
+    border: 1px solid var(--navy-700);
+    color: var(--orange);
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+  }
+  .card__face--front {
+    background: var(--navy-800);
+    border: 1px solid var(--green);
+    transform: rotateY(180deg);
+  }
+  .card.matched .card__face--front {
+    border-color: var(--yellow);
+    background: rgba(255, 201, 20, 0.12);
+  }
+  .win-panel { text-align: center; display:none; }
+  .win-panel__score {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    color: var(--yellow);
+    margin: 0.4rem 0 1.2rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="hazard-strip"></div>
+
+<header class="console">
+  <div class="console__brand">
+    <span class="status-light" aria-hidden="true"></span>
+    <div>RESCUE OPS<small>Задание: инвентаризация</small></div>
+  </div>
+  <div class="console__meta">канал 2 · склад снаряжения</div>
+</header>
+
+<main class="wrap">
+  <a class="back-link" href="../index.html">← на доску нарядов</a>
+  <p class="eyebrow">Задание 02 · память</p>
+  <h1 class="page-title">Инвентаризация снаряжения</h1>
+  <p class="lede">На складе перепутались карточки со снаряжением. Найди все пары за минимум ходов.</p>
+
+  <div class="hud">
+    <div class="hud__stat">Ходы<b id="hud-moves">0</b></div>
+    <div class="hud__stat">Пары<b id="hud-pairs">0 / 8</b></div>
+    <div class="hud__stat">Время<b id="hud-time">00:00</b></div>
+  </div>
+
+  <section class="panel" id="game-panel">
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="panel win-panel" id="win-panel">
+    <p class="eyebrow">Склад проверен</p>
+    <div class="win-panel__score" id="win-summary">0 ходов · 00:00</div>
+    <button class="btn" id="restart-btn">Новая смена</button>
+  </section>
+
+  <p class="footer-note">RESCUE OPS · учебный тренажёр на память</p>
+</main>
+
+<script>
+const ITEMS = ['🚑','🧯','🩹','🦺','🪢','🔦','⛑️','📻'];
+
+let deck = [];
+let flipped = [];
+let matchedCount = 0;
+let moves = 0;
+let timer = null;
+let seconds = 0;
+let lock = false;
+
+const grid = document.getElementById('grid');
+const hudMoves = document.getElementById('hud-moves');
+const hudPairs = document.getElementById('hud-pairs');
+const hudTime = document.getElementById('hud-time');
+const gamePanel = document.getElementById('game-panel');
+const winPanel = document.getElementById('win-panel');
+const winSummary = document.getElementById('win-summary');
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function formatTime(s) {
+  const m = String(Math.floor(s / 60)).padStart(2, '0');
+  const r = String(s % 60).padStart(2, '0');
+  return `${m}:${r}`;
+}
+
+function startTimer() {
+  clearInterval(timer);
+  seconds = 0;
+  hudTime.textContent = '00:00';
+  timer = setInterval(() => {
+    seconds++;
+    hudTime.textContent = formatTime(seconds);
+  }, 1000);
+}
+
+function buildBoard() {
+  deck = shuffle([...ITEMS, ...ITEMS]);
+  matchedCount = 0;
+  moves = 0;
+  flipped = [];
+  lock = false;
+  hudMoves.textContent = '0';
+  hudPairs.textContent = `0 / ${ITEMS.length}`;
+  grid.innerHTML = '';
+
+  deck.forEach((symbol, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.symbol = symbol;
+    card.dataset.index = idx;
+    card.innerHTML = `
+      <div class="card__inner">
+        <div class="card__face card__face--back">?</div>
+        <div class="card__face card__face--front">${symbol}</div>
+      </div>
+    `;
+    card.addEventListener('click', () => onCardClick(card));
+    grid.appendChild(card);
+  });
+
+  gamePanel.style.display = 'block';
+  winPanel.style.display = 'none';
+  startTimer();
+}
+
+function onCardClick(card) {
+  if (lock) return;
+  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+  card.classList.add('flipped');
+  flipped.push(card);
+
+  if (flipped.length === 2) {
+    lock = true;
+    moves++;
+    hudMoves.textContent = moves;
+    const [a, b] = flipped;
+    if (a.dataset.symbol === b.dataset.symbol) {
+      setTimeout(() => {
+        a.classList.add('matched');
+        b.classList.add('matched');
+        matchedCount++;
+        hudPairs.textContent = `${matchedCount} / ${ITEMS.length}`;
+        flipped = [];
+        lock = false;
+        if (matchedCount === ITEMS.length) finish();
+      }, 350);
+    } else {
+      setTimeout(() => {
+        a.classList.remove('flipped');
+        b.classList.remove('flipped');
+        flipped = [];
+        lock = false;
+      }, 800);
+    }
+  }
+}
+
+function finish() {
+  clearInterval(timer);
+  gamePanel.style.display = 'none';
+  winPanel.style.display = 'block';
+  winSummary.textContent = `${moves} ходов · ${formatTime(seconds)}`;
+}
+
+document.getElementById('restart-btn').addEventListener('click', buildBoard);
+
+buildBoard();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Экзамен по первой помощи — RESCUE OPS</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .options {
+    display: grid;
+    gap: 0.7rem;
+    margin-top: 1.4rem;
+  }
+  .option {
+    text-align: left;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--navy-700);
+    background: var(--navy-950);
+    color: var(--off-white);
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    cursor: pointer;
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .option:hover:not(:disabled) { border-color: var(--orange); }
+  .option.correct { background: rgba(46,196,182,0.18); border-color: var(--green); }
+  .option.wrong { background: rgba(230,57,70,0.18); border-color: var(--red); }
+  .option:disabled { cursor: default; }
+
+  .question-scene {
+    font-size: 2.4rem;
+    margin-bottom: 0.4rem;
+  }
+  .feedback {
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--paper);
+    min-height: 1.4em;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--navy-950);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 1.75rem;
+    border: 1px solid var(--navy-700);
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--orange);
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+  .result {
+    text-align: center;
+  }
+  .result__score {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    color: var(--yellow);
+    margin: 0.5rem 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="hazard-strip"></div>
+
+<header class="console">
+  <div class="console__brand">
+    <span class="status-light" aria-hidden="true"></span>
+    <div>RESCUE OPS<small>Задание: первая помощь</small></div>
+  </div>
+  <div class="console__meta">канал 1 · экзамен</div>
+</header>
+
+<main class="wrap">
+  <a class="back-link" href="../index.html">← на доску нарядов</a>
+  <p class="eyebrow">Задание 01 · знания</p>
+  <h1 class="page-title">Экзамен по первой помощи</h1>
+  <p class="lede">Перед тобой 10 ситуаций. Выбери верное действие. Правильный ответ — зелёный, ошибка — красный.</p>
+
+  <div class="hud">
+    <div class="hud__stat">Вопрос<b id="hud-progress">1 / 10</b></div>
+    <div class="hud__stat">Верно<b id="hud-score">0</b></div>
+  </div>
+
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+
+  <section class="panel" id="quiz-panel">
+    <div class="question-scene" id="q-scene">🩹</div>
+    <h2 id="q-text" style="font-family: var(--font-display); font-weight:500; margin: 0 0 0.2rem;"></h2>
+    <div class="options" id="q-options"></div>
+    <div class="feedback" id="q-feedback"></div>
+  </section>
+
+  <section class="panel result" id="result-panel" style="display:none;">
+    <p class="eyebrow">Смена окончена</p>
+    <div class="result__score" id="result-score">0 / 10</div>
+    <p id="result-comment" class="lede" style="margin:0 auto 1.4rem;"></p>
+    <button class="btn" id="restart-btn">Пройти заново</button>
+  </section>
+
+  <p class="footer-note">RESCUE OPS · учебный тренажёр, не заменяет официальное обучение первой помощи</p>
+</main>
+
+<script>
+const QUESTIONS = [
+  {
+    scene: "🔥",
+    text: "У человека небольшой ожог первой степени (кожа покраснела). Что делать в первую очередь?",
+    options: [
+      "Охладить место ожога прохладной проточной водой 10-15 минут",
+      "Смазать маслом или жиром",
+      "Проколоть пузыри, если появятся",
+      "Обмотать место ожога тканью потуже"
+    ],
+    correct: 0
+  },
+  {
+    scene: "🩸",
+    text: "Сильное кровотечение из раны на руке. Первое действие?",
+    options: [
+      "Наложить жгут выше раны сразу же",
+      "Прижать рану чистой тканью и удерживать давление",
+      "Промыть рану спиртом",
+      "Поднять руку и подождать, пока остановится само"
+    ],
+    correct: 1
+  },
+  {
+    scene: "🦴",
+    text: "Подозрение на перелом ноги после падения. Как правильно поступить?",
+    options: [
+      "Попробовать выпрямить и вправить конечность",
+      "Заставить пострадавшего встать и опереться на ногу",
+      "Обездвижить ногу подручными средствами и не давать нагрузку",
+      "Активно массировать место травмы"
+    ],
+    correct: 2
+  },
+  {
+    scene: "😵",
+    text: "Человек потерял сознание, но дышит нормально. Что сделать?",
+    options: [
+      "Уложить на спину и подложить под голову подушку повыше",
+      "Перевернуть в стабильное боковое положение и вызвать помощь",
+      "Дать понюхать нашатырь и оставить лежать на спине",
+      "Усадить и наклонить голову вперёд"
+    ],
+    correct: 1
+  },
+  {
+    scene: "🫀",
+    text: "Взрослый человек не дышит и не реагирует. Ты один и рядом есть телефон. Первым делом?",
+    options: [
+      "Сразу начать непрямой массаж сердца, звонок отложить",
+      "Вызвать скорую (или попросить кого-то) и начать СЛР",
+      "Подождать 5 минут — возможно, дыхание восстановится",
+      "Дать воды, чтобы человек пришёл в себя"
+    ],
+    correct: 1
+  },
+  {
+    scene: "🐝",
+    text: "Ребёнка ужалила оса, есть покраснение и отёк, дыхание в норме. Что делать?",
+    options: [
+      "Приложить холод к месту укуса и понаблюдать за состоянием",
+      "Немедленно дать любые обезболивающие таблетки",
+      "Тщательно тереть место укуса",
+      "Наложить тугую повязку на всю конечность"
+    ],
+    correct: 0
+  },
+  {
+    scene: "🧊",
+    text: "У человека признаки переохлаждения: дрожь, бледность, холодная кожа. Что предпринять?",
+    options: [
+      "Растирать снегом для восстановления кровотока",
+      "Быстро согреть в горячей ванне",
+      "Постепенно согреть сухой одеждой/одеялом, дать тёплое питьё",
+      "Дать алкоголь, чтобы согреться изнутри"
+    ],
+    correct: 2
+  },
+  {
+    scene: "🚗",
+    text: "ДТП: пострадавший в машине в сознании, жалуется на боль в шее. Что важно сделать?",
+    options: [
+      "Как можно быстрее вытащить его из машины",
+      "Не двигать пострадавшего без необходимости и дождаться скорую",
+      "Попросить его покрутить головой, чтобы проверить боль",
+      "Снять с него ремень безопасности и пересадить"
+    ],
+    correct: 1
+  },
+  {
+    scene: "🍽️",
+    text: "Человек подавился и не может ни говорить, ни кашлять. Первая помощь?",
+    options: [
+      "Дать выпить воды залпом",
+      "Сделать несколько резких ударов между лопаток / приём Геймлиха",
+      "Похлопать по спине очень легко и подождать",
+      "Уложить и приподнять ноги"
+    ],
+    correct: 1
+  },
+  {
+    scene: "☀️",
+    text: "У человека тепловой удар: слабость, головокружение, жар, на солнце. Что делать?",
+    options: [
+      "Увести/унести в тень или прохладное место, дать пить, охлаждать тело",
+      "Укутать одеялом, чтобы не было перепада температуры",
+      "Дать горячий чай для баланса температуры",
+      "Заставить продолжать физическую активность"
+    ],
+    correct: 0
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+const sceneEl = document.getElementById('q-scene');
+const textEl = document.getElementById('q-text');
+const optionsEl = document.getElementById('q-options');
+const feedbackEl = document.getElementById('q-feedback');
+const progressFill = document.getElementById('progress-fill');
+const hudProgress = document.getElementById('hud-progress');
+const hudScore = document.getElementById('hud-score');
+const quizPanel = document.getElementById('quiz-panel');
+const resultPanel = document.getElementById('result-panel');
+const resultScore = document.getElementById('result-score');
+const resultComment = document.getElementById('result-comment');
+
+function renderQuestion() {
+  answered = false;
+  const q = QUESTIONS[current];
+  sceneEl.textContent = q.scene;
+  textEl.textContent = q.text;
+  feedbackEl.textContent = '';
+  optionsEl.innerHTML = '';
+
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => selectOption(idx, btn));
+    optionsEl.appendChild(btn);
+  });
+
+  hudProgress.textContent = `${current + 1} / ${QUESTIONS.length}`;
+  progressFill.style.width = `${(current / QUESTIONS.length) * 100}%`;
+}
+
+function selectOption(idx, btn) {
+  if (answered) return;
+  answered = true;
+  const q = QUESTIONS[current];
+  const buttons = optionsEl.querySelectorAll('.option');
+  buttons.forEach(b => b.disabled = true);
+
+  if (idx === q.correct) {
+    btn.classList.add('correct');
+    feedbackEl.textContent = '✔ Верно! Так и нужно действовать.';
+    score++;
+    hudScore.textContent = score;
+  } else {
+    btn.classList.add('wrong');
+    buttons[q.correct].classList.add('correct');
+    feedbackEl.textContent = '✘ Неверно. Правильный вариант подсвечен зелёным.';
+  }
+
+  setTimeout(() => {
+    current++;
+    if (current < QUESTIONS.length) {
+      renderQuestion();
+    } else {
+      finish();
+    }
+  }, 1400);
+}
+
+function finish() {
+  progressFill.style.width = '100%';
+  quizPanel.style.display = 'none';
+  resultPanel.style.display = 'block';
+  resultScore.textContent = `${score} / ${QUESTIONS.length}`;
+  let comment;
+  if (score === QUESTIONS.length) comment = 'Идеально. Тебя можно ставить на смену прямо сейчас.';
+  else if (score >= QUESTIONS.length * 0.7) comment = 'Хороший результат — почти всё усвоено.';
+  else if (score >= QUESTIONS.length * 0.4) comment = 'Неплохо, но стоит повторить пару тем.';
+  else comment = 'Стоит пройтись по основам первой помощи ещё раз.';
+  resultComment.textContent = comment;
+}
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  current = 0;
+  score = 0;
+  hudScore.textContent = 0;
+  quizPanel.style.display = 'block';
+  resultPanel.style.display = 'none';
+  renderQuestion();
+});
+
+renderQuestion();
+</script>
+
+</body>
+</html>

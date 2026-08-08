@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RESCUE OPS — обучающие игры о спасателях</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="hazard-strip"></div>
+
+<header class="console">
+  <div class="console__brand">
+    <span class="status-light" aria-hidden="true"></span>
+    <div>
+      RESCUE OPS
+      <small>Учебный диспетчерский пункт</small>
+    </div>
+  </div>
+  <div class="console__meta" id="clock">канал открыт</div>
+</header>
+
+<main class="wrap">
+  <p class="eyebrow">Доска нарядов · выбери задание</p>
+  <h1 class="page-title">Стань спасателем на один вечер</h1>
+  <p class="lede">
+    Три коротких тренажёра — проверь реакцию, память и знание первой помощи.
+    Всё работает прямо в браузере, без установки.
+  </p>
+
+  <div class="board">
+
+    <a class="mission" href="games/quiz.html">
+      <span class="mission__tag">Знания</span>
+      <span class="mission__icon">🩹</span>
+      <h2>Экзамен по первой помощи</h2>
+      <p>10 ситуаций — ожог, порез, перелом. Выбери правильное действие, пока время не вышло.</p>
+      <span class="mission__go">Открыть задание →</span>
+    </a>
+
+    <a class="mission" href="games/memory.html">
+      <span class="mission__tag">Память</span>
+      <span class="mission__icon">🚑</span>
+      <h2>Инвентаризация снаряжения</h2>
+      <p>Найди пары карточек со спасательным снаряжением за минимум ходов.</p>
+      <span class="mission__go">Открыть задание →</span>
+    </a>
+
+    <a class="mission" href="games/backpack.html">
+      <span class="mission__tag">Реакция</span>
+      <span class="mission__icon">🎒</span>
+      <h2>Собери тревожный рюкзак</h2>
+      <p>Перетащи нужные предметы в рюкзак за 30 секунд. Лишнее — не бери, вес имеет значение.</p>
+      <span class="mission__go">Открыть задание →</span>
+    </a>
+
+  </div>
+
+  <p class="footer-note">RESCUE OPS · учебный проект · сделано для практики первой помощи</p>
+</main>
+
+<script>
+  const clock = document.getElementById('clock');
+  function tick() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    clock.textContent = `смена активна · ${hh}:${mm}:${ss}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
+
+</body>
+</html>

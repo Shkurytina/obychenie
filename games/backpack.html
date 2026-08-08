@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Собери тревожный рюкзак — RESCUE OPS</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  @media (max-width: 720px) {
+    .columns { grid-template-columns: 1fr; }
+  }
+  .zone-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    margin: 0 0 0.8rem;
+  }
+  .items {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+  }
+  .item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.7rem 0.4rem;
+    background: var(--navy-950);
+    border: 1px solid var(--navy-700);
+    border-radius: var(--radius);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.12s ease, transform 0.1s ease;
+  }
+  .item:hover { border-color: var(--orange); }
+  .item:active { transform: scale(0.96); }
+  .item__icon { font-size: 1.6rem; }
+  .item__label { font-size: 0.68rem; text-align: center; color: var(--paper); }
+  .item__weight {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--yellow);
+  }
+  .item.disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+
+  .backpack-zone {
+    min-height: 220px;
+    border: 1px dashed var(--navy-700);
+    border-radius: var(--radius);
+    padding: 0.8rem;
+  }
+  .backpack-zone.overweight { border-color: var(--red); }
+  .empty-hint {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--paper);
+    opacity: 0.5;
+    text-align: center;
+    padding: 2rem 0;
+  }
+
+  .weight-bar {
+    height: 10px;
+    background: var(--navy-950);
+    border: 1px solid var(--navy-700);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+  .weight-fill {
+    height: 100%;
+    background: var(--green);
+    width: 0%;
+    transition: width 0.2s ease;
+  }
+  .weight-fill.over { background: var(--red); }
+
+  .result { text-align: center; display: none; }
+  .result__score {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    color: var(--yellow);
+    margin: 0.4rem 0 0.6rem;
+  }
+  .result__list {
+    text-align: left;
+    max-width: 420px;
+    margin: 0 auto 1.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--paper);
+  }
+  .result__list li { margin-bottom: 0.3rem; }
+  .tag-ok { color: var(--green); }
+  .tag-bad { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="hazard-strip"></div>
+
+<header class="console">
+  <div class="console__brand">
+    <span class="status-light" aria-hidden="true"></span>
+    <div>RESCUE OPS<small>Задание: сборы</small></div>
+  </div>
+  <div class="console__meta">канал 3 · тревожный рюкзак</div>
+</header>
+
+<main class="wrap">
+  <a class="back-link" href="../index.html">← на доску нарядов</a>
+  <p class="eyebrow">Задание 03 · реакция</p>
+  <h1 class="page-title">Собери тревожный рюкзак</h1>
+  <p class="lede">Нажимай на нужные предметы, чтобы положить их в рюкзак. Лимит по весу — 10&nbsp;кг, время — 30 секунд. Бери только то, что реально пригодится в чрезвычайной ситуации.</p>
+
+  <div class="hud">
+    <div class="hud__stat">Время<b id="hud-time">30</b></div>
+    <div class="hud__stat">Вес<b id="hud-weight">0 / 10</b></div>
+    <div class="hud__stat">В рюкзаке<b id="hud-count">0</b></div>
+  </div>
+
+  <section class="panel" id="game-panel">
+    <div class="columns">
+      <div>
+        <p class="zone-title">Склад</p>
+        <div class="items" id="pool"></div>
+      </div>
+      <div>
+        <p class="zone-title">Рюкзак</p>
+        <div class="backpack-zone" id="backpack">
+          <p class="empty-hint" id="empty-hint">пока пусто — нажимай на предметы слева</p>
+        </div>
+        <div class="weight-bar"><div class="weight-fill" id="weight-fill"></div></div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:1.5rem;">
+      <button class="btn" id="done-btn">Готово, выхожу</button>
+    </div>
+  </section>
+
+  <section class="panel result" id="result-panel">
+    <p class="eyebrow">Сборы окончены</p>
+    <div class="result__score" id="result-score">0 очков</div>
+    <ul class="result__list" id="result-list"></ul>
+    <button class="btn" id="restart-btn">Собраться заново</button>
+  </section>
+
+  <p class="footer-note">RESCUE OPS · учебный тренажёр по сборам тревожного рюкзака</p>
+</main>
+
+<script>
+const CAPACITY = 10;
+const TIME_LIMIT = 30;
+
+const ITEMS = [
+  { id: 'water',    icon: '💧', label: 'Вода',            weight: 2, essential: true },
+  { id: 'firstaid', icon: '🩹', label: 'Аптечка',          weight: 1, essential: true },
+  { id: 'flash',    icon: '🔦', label: 'Фонарик',          weight: 1, essential: true },
+  { id: 'radio',    icon: '📻', label: 'Радио',            weight: 1, essential: true },
+  { id: 'blanket',  icon: '🧣', label: 'Тёплое одеяло',    weight: 2, essential: true },
+  { id: 'whistle',  icon: '📯', label: 'Свисток',          weight: 1, essential: true },
+  { id: 'docs',     icon: '📄', label: 'Документы',        weight: 1, essential: true },
+  { id: 'knife',    icon: '🔪', label: 'Мультитул',        weight: 1, essential: true },
+  { id: 'canned',   icon: '🥫', label: 'Консервы',         weight: 2, essential: true },
+  { id: 'teddy',    icon: '🧸', label: 'Плюшевый мишка',   weight: 1, essential: false },
+  { id: 'book',     icon: '📚', label: 'Толстая книга',    weight: 3, essential: false },
+  { id: 'hairdry',  icon: '💇', label: 'Фен',              weight: 2, essential: false },
+  { id: 'console',  icon: '🎮', label: 'Игровая приставка',weight: 2, essential: false },
+  { id: 'soda',     icon: '🥤', label: 'Газировка',        weight: 1, essential: false },
+  { id: 'heels',    icon: '👠', label: 'Туфли на каблуке', weight: 1, essential: false },
+];
+
+let inBag = new Set();
+let timeLeft = TIME_LIMIT;
+let ticker = null;
+let finished = false;
+
+const pool = document.getElementById('pool');
+const backpack = document.getElementById('backpack');
+const emptyHint = document.getElementById('empty-hint');
+const hudTime = document.getElementById('hud-time');
+const hudWeight = document.getElementById('hud-weight');
+const hudCount = document.getElementById('hud-count');
+const weightFill = document.getElementById('weight-fill');
+const backpackZone = document.getElementById('backpack');
+const gamePanel = document.getElementById('game-panel');
+const resultPanel = document.getElementById('result-panel');
+const resultScore = document.getElementById('result-score');
+const resultList = document.getElementById('result-list');
+
+function currentWeight() {
+  return [...inBag].reduce((sum, id) => sum + ITEMS.find(i => i.id === id).weight, 0);
+}
+
+function renderPool() {
+  pool.innerHTML = '';
+  ITEMS.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'item' + (inBag.has(item.id) ? ' disabled' : '');
+    el.innerHTML = `
+      <span class="item__icon">${item.icon}</span>
+      <span class="item__label">${item.label}</span>
+      <span class="item__weight">${item.weight} кг</span>
+    `;
+    el.addEventListener('click', () => addToBag(item.id));
+    pool.appendChild(el);
+  });
+}
+
+function renderBackpack() {
+  backpack.innerHTML = '';
+  if (inBag.size === 0) {
+    backpack.appendChild(emptyHint);
+    return;
+  }
+  const grid = document.createElement('div');
+  grid.className = 'items';
+  [...inBag].forEach(id => {
+    const item = ITEMS.find(i => i.id === id);
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <span class="item__icon">${item.icon}</span>
+      <span class="item__label">${item.label}</span>
+      <span class="item__weight">${item.weight} кг</span>
+    `;
+    el.addEventListener('click', () => removeFromBag(id));
+    grid.appendChild(el);
+  });
+  backpack.appendChild(grid);
+}
+
+function updateHud() {
+  const w = currentWeight();
+  hudWeight.textContent = `${w} / ${CAPACITY}`;
+  hudCount.textContent = inBag.size;
+  const pct = Math.min(100, (w / CAPACITY) * 100);
+  weightFill.style.width = `${pct}%`;
+  weightFill.classList.toggle('over', w > CAPACITY);
+  backpackZone.classList.toggle('overweight', w > CAPACITY);
+}
+
+function addToBag(id) {
+  if (finished || inBag.has(id)) return;
+  const item = ITEMS.find(i => i.id === id);
+  if (currentWeight() + item.weight > CAPACITY) return;
+  inBag.add(id);
+  renderPool();
+  renderBackpack();
+  updateHud();
+}
+
+function removeFromBag(id) {
+  if (finished) return;
+  inBag.delete(id);
+  renderPool();
+  renderBackpack();
+  updateHud();
+}
+
+function startTimer() {
+  clearInterval(ticker);
+  timeLeft = TIME_LIMIT;
+  hudTime.textContent = timeLeft;
+  ticker = setInterval(() => {
+    timeLeft--;
+    hudTime.textContent = timeLeft;
+    if (timeLeft <= 0) finish();
+  }, 1000);
+}
+
+function finish() {
+  if (finished) return;
+  finished = true;
+  clearInterval(ticker);
+  gamePanel.style.display = 'none';
+  resultPanel.style.display = 'block';
+
+  const essentialTaken = [...inBag].filter(id => ITEMS.find(i => i.id === id).essential);
+  const junkTaken = [...inBag].filter(id => !ITEMS.find(i => i.id === id).essential);
+  const totalEssential = ITEMS.filter(i => i.essential).length;
+  const score = essentialTaken.length * 10 - junkTaken.length * 5;
+
+  resultScore.textContent = `${score} очков`;
+  resultList.innerHTML = `
+    <li class="tag-ok">✔ Нужных предметов взято: ${essentialTaken.length} из ${totalEssential}</li>
+    <li class="${junkTaken.length ? 'tag-bad' : 'tag-ok'}">✘ Лишнего взято: ${junkTaken.length}</li>
+    <li>Итоговый вес: ${currentWeight()} / ${CAPACITY} кг</li>
+  `;
+}
+
+document.getElementById('done-btn').addEventListener('click', finish);
+document.getElementById('restart-btn').addEventListener('click', () => {
+  inBag = new Set();
+  finished = false;
+  gamePanel.style.display = 'block';
+  resultPanel.style.display = 'none';
+  renderPool();
+  renderBackpack();
+  updateHud();
+  startTimer();
+});
+
+renderPool();
+renderBackpack();
+updateHud();
+startTimer();
+</script>
+
+</body>
+</html>
